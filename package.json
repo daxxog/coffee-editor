@@ -1,0 +1,19 @@
+{
+    "name"        : "coffee-editor",
+    "description" : "Lightweight WYSIWYG editor.",
+    "homepage"    : "https://github.com/daxxog/coffee-editor",
+    "main"        : "coffee-editor.js",
+    "version"     : "0.0.1",
+    "engines": { "node" : ">=0.7.0" },
+    "maintainers": [{
+        "name"  : "David Volm",
+        "email" : "david@volminator.com",
+        "web"   : "http://daxxog.com/"
+    }],
+    "repository": {
+        "type" : "git",
+        "url"  : "https://github.com/daxxog/coffee-editor.git"
+    },
+    "dependencies": {
+    }
+}
