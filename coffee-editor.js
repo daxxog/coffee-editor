@@ -126,7 +126,9 @@
             span.addClass('imageWrapper');
             
             img.imagesLoaded(function() {
-                img.resizable();
+                img.resizable({
+                    containment: j
+                });
             });
             
             span.draggable({
@@ -135,26 +137,36 @@
             });
         });
         
-        j.keyup(function() {
-            ev('update');
-        });
-        
-        j.mouseup(function() {
-            ev('update');
-        });
-        
-        j.on('cut', function() {
-            setTimeout(function() {
+        var events = {
+            'keyup': function() {
                 ev('update');
-            }, 150);
-        });
-        
-        j.on('paste', function() {
-            setTimeout(function() {
+            },
+            'mouseup': function() {
                 ev('update');
-                ev('refresh');
-            }, 150);
-        });
+            },
+            'cut': function() {
+                setTimeout(function() {
+                    ev('update');
+                }, 150);
+            },
+            'paste': function() {
+                setTimeout(function() {
+                    ev('update');
+                    ev('refresh');
+                }, 150);
+            }
+        };
+        
+        j.off((function(events) {
+            var a = [];
+            
+            for(var key in events) {
+                a.push(key);
+            }
+            
+            return a.join(' ');
+        })(events));
+        j.on(events);
     };
     
     CoffeeEditor.prototype.toHTML = function(cb) {
@@ -193,10 +205,6 @@
             
             $$.before(img);
             $$.remove();
-        });
-        
-        j.imagesLoaded(function() {
-            console.log('hello');
         });
         
         return this.html = _j.html();
