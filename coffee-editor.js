@@ -44,26 +44,82 @@
         var el = $(_j).get(0),
             j = $(el);
         
-        this.html = j.html();
         this.el = el;
         this.j = j;
         
         this.attach();
+        this.toHTML();
         
-        el.contentEditable = true;
+        j.css({
+            width: j.width(),
+            height: j.height(),
+            overflow: 'scroll'
+        });
+        
+        //el.contentEditable = true;
     };
     
     CoffeeEditor.prototype.attach = function() {
         var j = this.j;
         
         j.find('img').each(function(i, v) {
-            //console.log(v);
-            //WIP use jQuery UI to make resizeable
+            var img = $(v),
+                span = img.wrap('<span>').parent();
+            
+            span.css({
+                display: 'inline-block'
+            });
+            
+            span.addClass('imageWrapper');
+            
+            imagesLoaded(img, function() {
+                img.resizable();
+            });
+            
+            span.draggable({
+                containment: j,
+                cursor: 'move'
+            });
         });
     };
     
     CoffeeEditor.prototype.toHTML = function() {
-        return this.html;
+        var j = this.j,
+            _j;
+        
+        j.find('.imageWrapper').each(function(i, v) {
+            var $$ = $(v);
+            
+            $$.attr('data-pos', JSON.stringify($$.position()));
+        });
+        
+        _j = j.clone();
+        
+        _j.find('.imageWrapper').each(function(i, v) {
+            var $$ = $(v),
+                img = $$.find('img'),
+                pos = JSON.parse($$.attr('data-pos')),
+                w = img.width(),
+                h = img.height();
+            
+            img.attr({
+                class: '',
+                style: ''
+            });
+            
+            img.css({
+                top: pos.top,
+                left: pos.left,
+                width: w,
+                height: h,
+                position: 'absolute'
+            });
+            
+            $$.before(img);
+            $$.remove();
+        });
+        
+        return this.html = _j.html();
     };
     
     return CoffeeEditor;
