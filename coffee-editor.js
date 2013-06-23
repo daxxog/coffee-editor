@@ -40,15 +40,44 @@
         };
   }
 }(this, function() {
+    var ev = function(e, cb) { //run / on event
+        if(typeof ev._ == 'undefined') {
+            ev._ = {};
+        }
+        
+        if(typeof e == 'string') {
+            if(!$.isArray(ev._[e])) {
+                ev._[e] = [];
+            }
+            
+            if(typeof cb == 'function') { //if we have a function
+                return ev._[e].push(cb); //push it on the stack
+            } else if(cb === 'k') { //if we want to kill an event now
+                ev._[e].forEach(function(v, i, a) { // loop and
+                    delete ev._[e][i];              // kill all events
+                });
+            } else { //execute event
+                ev._[e].forEach(function(v, i, a) { // loop and
+                    if(typeof v == 'function') { //find functions
+                        if(v() === 'k') { //if we should kill this function after running
+                            delete ev._[e][i]; //delete the function
+                        }
+                    }
+                });
+            }
+        }
+    };
+    
     var CoffeeEditor = function(_j) {
         var el = $(_j).get(0),
-            j = $(el);
+            j = $(el),
+            that = this;
         
-        this.el = el;
-        this.j = j;
+        that.el = el;
+        that.j = j;
         
-        this.attach();
-        this.toHTML();
+        that.attach();
+        that.toHTML();
         
         j.css({
             width: j.width(),
@@ -56,7 +85,15 @@
             overflow: 'scroll'
         });
         
-        //el.contentEditable = true;
+        ev('refresh', function() {
+            that.j.html(that.toHTML());
+            
+            j.imagesLoaded(function() {
+                that.attach();
+            });
+        });
+        
+        el.contentEditable = true;
     };
     
     CoffeeEditor.prototype.attach = function() {
@@ -64,15 +101,31 @@
         
         j.find('img').each(function(i, v) {
             var img = $(v),
-                span = img.wrap('<span>').parent();
+                span = img.wrap('<span>').parent(),
+                pos = img.position();
             
             span.css({
-                display: 'inline-block'
+                display: 'inline-block',
+                top: pos.top,
+                left: pos.left,
+                position: 'absolute'
+            });
+            
+            img.css({
+                top: 0,
+                left: 0,
+                position: 'relative'
+            });
+            
+            ev('update', function() {
+                if(!img.is(':visible')) {
+                    span.remove();
+                }
             });
             
             span.addClass('imageWrapper');
             
-            imagesLoaded(img, function() {
+            img.imagesLoaded(function() {
                 img.resizable();
             });
             
@@ -81,14 +134,37 @@
                 cursor: 'move'
             });
         });
+        
+        j.keyup(function() {
+            ev('update');
+        });
+        
+        j.mouseup(function() {
+            ev('update');
+        });
+        
+        j.on('cut', function() {
+            setTimeout(function() {
+                ev('update');
+            }, 150);
+        });
+        
+        j.on('paste', function() {
+            setTimeout(function() {
+                ev('update');
+                ev('refresh');
+            }, 150);
+        });
     };
     
-    CoffeeEditor.prototype.toHTML = function() {
+    CoffeeEditor.prototype.toHTML = function(cb) {
         var j = this.j,
             _j;
         
         j.find('.imageWrapper').each(function(i, v) {
             var $$ = $(v);
+            
+            console.log($$.position());
             
             $$.attr('data-pos', JSON.stringify($$.position()));
         });
@@ -99,14 +175,14 @@
             var $$ = $(v),
                 img = $$.find('img'),
                 pos = JSON.parse($$.attr('data-pos')),
-                w = img.width(),
-                h = img.height();
-            
+                    w = img.width(),
+                    h = img.height();
+                
             img.attr({
                 class: '',
                 style: ''
             });
-            
+
             img.css({
                 top: pos.top,
                 left: pos.left,
@@ -117,6 +193,10 @@
             
             $$.before(img);
             $$.remove();
+        });
+        
+        j.imagesLoaded(function() {
+            console.log('hello');
         });
         
         return this.html = _j.html();
